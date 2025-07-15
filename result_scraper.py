@@ -69,13 +69,13 @@ chrome_options.add_argument("--disable-dev-shm-usage")  # Overcome limited resou
 # Set up the WebDriver
 # Determine chromedriver path based on OS for local and GitHub Actions compatibility
 if sys.platform == "win32":
-    service_instance = Service(executable_path="chromedriver.exe")  # Windows
+    # For Windows, assume chromedriver.exe is in PATH or automatically found
+    driver = webdriver.Chrome(options=chrome_options)
 else:
     # For Linux environments like GitHub Actions, chromedriver is often in /usr/local/bin/
     # or can be specified if downloaded to a custom path.
     service_instance = Service(executable_path="/usr/local/bin/chromedriver") # Linux (GitHub Actions)
-
-driver = webdriver.Chrome(service=service_instance, options=chrome_options)
+    driver = webdriver.Chrome(service=service_instance, options=chrome_options)
 
 from selenium.common.exceptions import TimeoutException, WebDriverException
 
