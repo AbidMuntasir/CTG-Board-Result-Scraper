@@ -1,0 +1,41 @@
+name: Run Result Scraper
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Runs every 6 hours
+  workflow_dispatch:      # Allows manual execution
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_PAT }} # Uses the PAT stored in secrets
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x' # Use a suitable Python version
+
+      - name: Set up ChromeDriver
+        uses: nanasess/setup-chromedriver@v2
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install selenium beautifulsoup4 # Install necessary packages
+
+      - name: Run the Result Scraper Script
+        run: python result_scraper.py
+
+      - name: Commit and Push Changes
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "github-actions@github.com"
+          git add ssc_results.csv progress.json # Add the generated/updated files
+          git commit -m "Auto-update scraped results" || echo "No changes to commit"
+          git push https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}.git HEAD:main
