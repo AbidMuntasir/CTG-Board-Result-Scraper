@@ -18,10 +18,6 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }} # Uses the PAT stored in secrets
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x' # Use a suitable Python version
 
       - name: Set up ChromeDriver
         uses: nanasess/setup-chromedriver@v2
