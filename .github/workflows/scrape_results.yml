@@ -5,6 +5,10 @@ on:
     - cron: '0 */6 * * *'  # Runs every 6 hours
   workflow_dispatch:      # Allows manual execution
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false # New runs will be queued if a run is in progress
+
 jobs:
   run-script:
     runs-on: ubuntu-latest
