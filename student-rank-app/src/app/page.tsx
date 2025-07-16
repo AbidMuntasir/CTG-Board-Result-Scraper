@@ -1,103 +1,300 @@
-import Image from "next/image";
+// student-rank-app/src/app/page.tsx
+'use client'; // This is a Client Component
+
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+interface Student {
+  id: number;
+  roll_number: string;
+  student_name: string;
+  institution_name: string;
+  gpa: string;
+  total_marks: number;
+  registration_id: string;
+  board: string;
+  father_name: string;
+  science_group: string;
+  mother_name: string;
+  year: string;
+  exam_type: string;
+  student_type: string;
+  date_of_birth: string;
+  subject_marks: Record<string, { name: string; score: number; grade: string }>;
+}
+
+interface Pagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+interface FilterOptions {
+  institutions: string[];
+  years: string[];
+  examTypes: string[];
+}
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+  const [students, setStudents] = useState<Student[]>([]);
+  const [pagination, setPagination] = useState<Pagination>({ total: 0, page: 1, limit: 100, totalPages: 1 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ institutions: [], years: [], examTypes: [] });
+  const [filtersLoading, setFiltersLoading] = useState(true);
+  const [filtersError, setFiltersError] = useState<string | null>(null);
+
+
+  const currentPage = parseInt(searchParams.get('page') || '1');
+  const currentLimit = parseInt(searchParams.get('limit') || '100');
+  const searchTermFromURL = searchParams.get('search') || '';
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTermFromURL);
+
+  const institutionFilter = searchParams.get('institution') || '';
+  const yearFilter = searchParams.get('year') || '';
+  const examTypeFilter = searchParams.get('exam_type') || '';
+
+  // Sync local search term with URL search term when URL changes
+  useEffect(() => {
+    setLocalSearchTerm(searchTermFromURL);
+  }, [searchTermFromURL]);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      params.set('page', currentPage.toString());
+      params.set('limit', currentLimit.toString());
+      if (searchTermFromURL) params.set('search', searchTermFromURL); // Use searchTermFromURL for fetching
+      if (institutionFilter) params.set('institution', institutionFilter);
+      if (yearFilter) params.set('year', yearFilter);
+      if (examTypeFilter) params.set('exam_type', examTypeFilter);
+
+      const response = await fetch(`/api/students?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+      setStudents(result.data);
+      setPagination(result.pagination);
+    } catch (e: any) {
+      setError(e.message || 'An unknown error occurred');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, currentLimit, searchTermFromURL, institutionFilter, yearFilter, examTypeFilter]);
+
+  const fetchFilterOptions = useCallback(async () => {
+    setFiltersLoading(true);
+    setFiltersError(null);
+    try {
+      const response = await fetch('/api/filters');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+      setFilterOptions(result);
+    } catch (e: any) {
+      setFiltersError(e.message || 'An unknown error occurred fetching filters');
+    } finally {
+      setFiltersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+    fetchFilterOptions();
+  }, [fetchData, fetchFilterOptions]);
+
+  const handlePageChange = (newPage: number) => {
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set('page', newPage.toString());
+    router.push(`/?${newParams.toString()}`);
+  };
+
+  const handleSearch = () => {
+    const newParams = new URLSearchParams(searchParams.toString());
+    if (localSearchTerm) {
+      newParams.set('search', localSearchTerm);
+    } else {
+      newParams.delete('search');
+    }
+    newParams.set('page', '1'); // Reset to first page on new search
+    router.push(`/?${newParams.toString()}`);
+  };
+
+  const handleInstitutionClick = (institutionName: string) => {
+    const newParams = new URLSearchParams();
+    newParams.set('institution', institutionName);
+    newParams.set('page', '1'); // Reset to first page when filtering
+    router.push(`/?${newParams.toString()}`);
+  };
+
+  if (loading || filtersLoading) return <div className="text-center p-8">Loading data...</div>;
+  if (error) return <div className="text-center p-8 text-red-500">Error: {error}</div>;
+  if (filtersError) return <div className="text-center p-8 text-red-500">Error fetching filters: {filtersError}</div>;
+
+  return (
+    <div className="container mx-auto p-4 bg-background text-foreground min-h-screen">
+      <h1 className="text-2xl font-bold mb-4 text-center">Student Rankings</h1>
+
+      <div className="mb-4 flex flex-col sm:flex-row gap-4">
+        <input
+          type="text"
+          placeholder="Search by Name, Roll No, Institution..."
+          className="p-2 border rounded w-full sm:w-1/3 bg-white dark:bg-gray-700 text-foreground"
+          value={localSearchTerm}
+          onChange={(e) => setLocalSearchTerm(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleSearch();
+            }
+          }}
+        />
+        <button
+          onClick={handleSearch}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          Search
+        </button>
+
+        <select
+          className="p-2 border rounded w-full sm:w-1/4 bg-white dark:bg-gray-700 text-foreground"
+          value={institutionFilter}
+          onChange={(e) => {
+            const newParams = new URLSearchParams(searchParams.toString());
+            if (e.target.value) {
+              newParams.set('institution', e.target.value);
+            } else {
+              newParams.delete('institution');
+            }
+            newParams.set('page', '1');
+            router.push(`/?${newParams.toString()}`);
+          }}
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          <option value="">All Institutions</option>
+          {filterOptions.institutions.map((inst) => (
+            <option key={inst} value={inst}>
+              {inst}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="p-2 border rounded w-full sm:w-1/6 bg-white dark:bg-gray-700 text-foreground"
+          value={yearFilter}
+          onChange={(e) => {
+            const newParams = new URLSearchParams(searchParams.toString());
+            if (e.target.value) {
+              newParams.set('year', e.target.value);
+            } else {
+              newParams.delete('year');
+            }
+            newParams.set('page', '1');
+            router.push(`/?${newParams.toString()}`);
+          }}
         >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <option value="">All Years</option>
+          {filterOptions.years.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="p-2 border rounded w-full sm:w-1/6 bg-white dark:bg-gray-700 text-foreground"
+          value={examTypeFilter}
+          onChange={(e) => {
+            const newParams = new URLSearchParams(searchParams.toString());
+            if (e.target.value) {
+              newParams.set('exam_type', e.target.value);
+            } else {
+              newParams.delete('exam_type');
+            }
+            newParams.set('page', '1');
+            router.push(`/?${newParams.toString()}`);
+          }}
+        >
+          <option value="">All Exam Types</option>
+          {filterOptions.examTypes.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md">
+        <table className="min-w-full border border-gray-300 dark:border-gray-700">
+          <thead>
+            <tr className="bg-gray-100 dark:bg-gray-700">
+              <th className="py-2 px-4 border-b dark:border-gray-600 text-foreground">Rank</th>
+              <th className="py-2 px-4 border-b dark:border-gray-600 text-foreground">Name</th>
+              <th className="py-2 px-4 border-b dark:border-gray-600 text-foreground">Roll Number</th>
+              <th className="py-2 px-4 border-b dark:border-gray-600 text-foreground">Institution Name</th>
+              <th className="py-2 px-4 border-b dark:border-gray-600 text-foreground">GPA</th>
+              <th className="py-2 px-4 border-b dark:border-gray-600 text-foreground">Total Marks</th>
+              <th className="py-2 px-4 border-b dark:border-gray-600 text-foreground">Year</th>
+              <th className="py-2 px-4 border-b dark:border-gray-600 text-foreground">Exam Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            {students.map((student, index) => (
+              <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                <td className="py-2 px-4 border-b dark:border-gray-700 text-center">{
+                  (pagination.page - 1) * pagination.limit + index + 1
+                }</td>
+                <td className="py-2 px-4 border-b dark:border-gray-700">
+                  <Link href={`/student/${student.roll_number}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                    {student.student_name}
+                  </Link>
+                </td>
+                <td className="py-2 px-4 border-b dark:border-gray-700">{student.roll_number}</td>
+                <td className="py-2 px-4 border-b dark:border-gray-700">
+                  <button
+                    onClick={() => handleInstitutionClick(student.institution_name)}
+                    className="text-blue-600 dark:text-blue-400 hover:underline focus:outline-none"
+                  >
+                    {student.institution_name}
+                  </button>
+                </td>
+                <td className="py-2 px-4 border-b dark:border-gray-700 text-center">{student.gpa}</td>
+                <td className="py-2 px-4 border-b dark:border-gray-700 text-center">{student.total_marks}</td>
+                <td className="py-2 px-4 border-b dark:border-gray-700 text-center">{student.year}</td>
+                <td className="py-2 px-4 border-b dark:border-gray-700 text-center">{student.exam_type}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-between items-center mt-4">
+        <button
+          onClick={() => handlePageChange(pagination.page - 1)}
+          disabled={pagination.page <= 1}
+          className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
+        >
+          Previous
+        </button>
+        <span className="text-foreground">
+          Page {pagination.page} of {pagination.totalPages}
+        </span>
+        <button
+          onClick={() => handlePageChange(pagination.page + 1)}
+          disabled={pagination.page >= pagination.totalPages}
+          className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 }
