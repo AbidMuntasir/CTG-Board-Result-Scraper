@@ -1,7 +1,6 @@
 import pandas as pd
 import re
 import json
-
 def parse_subject_data(row_data):
     """
     Parses the subject data from a row and calculates total marks.
@@ -111,10 +110,13 @@ if __name__ == "__main__":
         import os
         import psycopg2
         from psycopg2 import extras
+        from dotenv import load_dotenv
+
+        load_dotenv() # Load environment variables from .env file
 
         NEON_DATABASE_URL = os.getenv("NEON_DATABASE_URL")
         if not NEON_DATABASE_URL:
-            raise ValueError("NEON_DATABASE_URL environment variable not set.")
+            raise ValueError("NEON_DATABASE_URL environment variable not set. Please ensure it is in your .env file.")
 
         conn = psycopg2.connect(NEON_DATABASE_URL)
         cur = conn.cursor()

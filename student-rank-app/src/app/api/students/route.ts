@@ -9,10 +9,11 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '100');
     const offset = (page - 1) * limit;
 
-    const searchTerm = searchParams.get('search'); // For Name, Roll Number, Institution
+    const searchTerm = searchParams.get('search');
     const institutionFilter = searchParams.get('institution');
     const yearFilter = searchParams.get('year');
     const examTypeFilter = searchParams.get('exam_type');
+    const sortBy = searchParams.get('sortBy');
 
     let whereClauses: string[] = [];
     let queryParams: (string | number)[] = [];
@@ -47,28 +48,45 @@ export async function GET(req: NextRequest) {
 
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
-    // Base query for students, ordered by total_marks for ranking
+    let rankPartition = '';
+    let orderBySql = 'ORDER BY total_marks DESC';
+
+    if (sortBy === 'institution' && institutionFilter) {
+      rankPartition = `PARTITION BY institution_name`;
+      orderBySql = 'ORDER BY institution_name, total_marks DESC';
+    }
+    // Future sorting options can be added here, e.g.:
+    // else if (sortBy === 'year' && yearFilter) {
+    //   rankPartition = `PARTITION BY year`;
+    //   orderBySql = 'ORDER BY year, total_marks DESC';
+    // }
+
     const studentsQuery = `
-      SELECT
-        id,
-        roll_number,
-        student_name,
-        institution_name,
-        gpa,
-        total_marks,
-        registration_id,
-        board,
-        father_name,
-        science_group,
-        mother_name,
-        year,
-        exam_type,
-        student_type,
-        date_of_birth,
-        subject_marks
-      FROM students
+      WITH ranked_students AS (
+        SELECT
+          id,
+          roll_number,
+          student_name,
+          institution_name,
+          gpa,
+          total_marks,
+          registration_id,
+          board,
+          father_name,
+          science_group,
+          mother_name,
+          year,
+          exam_type,
+          student_type,
+          date_of_birth,
+          subject_marks,
+          DENSE_RANK() OVER (${rankPartition} ORDER BY total_marks DESC) as rank
+        FROM students
+      )
+      SELECT *
+      FROM ranked_students
       ${whereSql}
-      ORDER BY total_marks DESC
+      ${orderBySql}
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1};
     `;
     queryParams.push(limit, offset);
