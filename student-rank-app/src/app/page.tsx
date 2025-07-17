@@ -24,6 +24,7 @@ interface FilterOptions {
   institutions: string[];
   years: string[];
   examTypes: string[];
+  groups: string[]; // Added groups back
 }
 
 export default function Home() {
@@ -34,15 +35,45 @@ export default function Home() {
   const [pagination, setPagination] = useState<Pagination>({ total: 0, page: 1, limit: 100, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ institutions: [], years: [], examTypes: [] });
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ institutions: [], years: [], examTypes: [], groups: [] }); // Initialize groups
   const [filtersLoading, setFiltersLoading] = useState(true);
   const [filtersError, setFiltersError] = useState<string | null>(null);
 
   const [selectedExamType, setSelectedExamType] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
-  const [selectedInstitution, setSelectedInstitution] = useState(''); // New state for institution filter
-  const [currentView, setCurrentView] = useState<'examTypeSelection' | 'yearSelection' | 'results'>('examTypeSelection');
+  const [selectedInstitution, setSelectedInstitution] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState('Science'); // Default to Science
+  const initialExamType = searchParams.get('exam_type');
+  const initialYear = searchParams.get('year');
+  const initialGroup = searchParams.get('group');
+  const [currentView, setCurrentView] = useState<'examTypeSelection' | 'yearSelection' | 'results'>(() => {
+    if (initialExamType && initialYear) {
+      return 'results';
+    } else if (initialExamType) {
+      return 'yearSelection';
+    }
+    return 'examTypeSelection';
+  });
 
+  // Initialize selectedExamType and selectedYear from URL on first load
+  useEffect(() => {
+    if (initialExamType) setSelectedExamType(initialExamType);
+    if (initialYear) setSelectedYear(initialYear);
+  }, [initialExamType, initialYear]);
+
+  // Effect to update currentView when URL search parameters change
+  useEffect(() => {
+    const examTypeParam = searchParams.get('exam_type');
+    const yearParam = searchParams.get('year');
+
+    if (examTypeParam && yearParam) {
+      setCurrentView('results');
+    } else if (examTypeParam) {
+      setCurrentView('yearSelection');
+    } else {
+      setCurrentView('examTypeSelection');
+    }
+  }, [searchParams]);
 
   const currentPage = parseInt(searchParams.get('page') || '1');
   const currentLimit = parseInt(searchParams.get('limit') || '100');
@@ -52,8 +83,8 @@ export default function Home() {
   const institutionFilter = searchParams.get('institution') || '';
   const yearFilter = searchParams.get('year') || '';
   const examTypeFilter = searchParams.get('exam_type') || '';
+  const groupFilter = searchParams.get('group') || 'Science'; // Default to Science if not in URL
   const sortBy = searchParams.get('sortBy') || '';
-
   // Sync local search term with URL search term when URL changes
   useEffect(() => {
     setLocalSearchTerm(searchTermFromURL);
@@ -64,20 +95,25 @@ export default function Home() {
     setSelectedInstitution(institutionFilter);
   }, [institutionFilter]);
 
+  // Sync local selectedGroup with URL group filter when URL changes
+  useEffect(() => {
+    setSelectedGroup(groupFilter);
+  }, [groupFilter]);
+
   const fetchData = useCallback(async () => {
-    if (currentView !== 'results') return;
+    if (currentView !== 'results') return; // Only fetch data if in results view
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams();
       params.set('page', currentPage.toString());
       params.set('limit', currentLimit.toString());
-      if (searchParams.get('search')) params.set('search', searchParams.get('search') || ''); // Use searchParams directly for fetching
+      if (searchParams.get('search')) params.set('search', searchParams.get('search') || '');
       if (institutionFilter) params.set('institution', institutionFilter);
       if (yearFilter) params.set('year', yearFilter);
       if (examTypeFilter) params.set('exam_type', examTypeFilter);
+      if (groupFilter) params.set('group', groupFilter); // Pass group filter
       if (sortBy) params.set('sortBy', sortBy);
-
       const response = await fetch(`/api/students?${params.toString()}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -90,7 +126,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, currentLimit, searchParams, institutionFilter, yearFilter, examTypeFilter, selectedInstitution, sortBy]);
+  }, [currentPage, currentLimit, searchParams, institutionFilter, yearFilter, examTypeFilter, groupFilter, selectedInstitution, selectedGroup, sortBy, currentView]);
 
   const fetchFilterOptions = useCallback(async () => {
     setFiltersLoading(true);
@@ -110,11 +146,11 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (currentView === 'results') {
+    if (currentView === 'results') { // Only fetch data if in results view
       fetchData();
     }
     fetchFilterOptions();
-  }, [currentPage, currentLimit, searchTermFromURL, institutionFilter, yearFilter, examTypeFilter, sortBy, currentView, fetchFilterOptions]);
+  }, [currentPage, currentLimit, searchTermFromURL, institutionFilter, yearFilter, examTypeFilter, groupFilter, sortBy, currentView, fetchFilterOptions]);
 
   const handlePageChange = (newPage: number) => {
     const newParams = new URLSearchParams(searchParams.toString());
@@ -145,20 +181,32 @@ export default function Home() {
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.delete('sortBy');
     newParams.delete('institution'); // Also clear institution filter when clearing sort
+    newParams.delete('group'); // Clear group filter when clearing sort
     router.push(`/?${newParams.toString()}`);
     setSelectedInstitution(''); // Clear selected institution state
+    setSelectedGroup('Science'); // Reset to default Science group
   };
 
-  const handleInstitutionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newInstitution = e.target.value;
-    setSelectedInstitution(newInstitution);
+  const handleFilterChange = (type: string, value: string) => {
     const newParams = new URLSearchParams(searchParams.toString());
-    if (newInstitution) {
-      newParams.set('institution', newInstitution);
-      newParams.set('sortBy', 'institution'); // Automatically sort by institution when filtered
-    } else {
-      newParams.delete('institution');
-      newParams.delete('sortBy'); // Clear sort if institution filter is removed
+    if (type === 'institution') {
+      setSelectedInstitution(value);
+      if (value) {
+        newParams.set('institution', value);
+        newParams.set('sortBy', 'institution');
+      } else {
+        newParams.delete('institution');
+        newParams.delete('sortBy');
+      }
+    } else if (type === 'group') {
+      setSelectedGroup(value);
+      if (value) {
+        newParams.set('group', value);
+        newParams.set('sortBy', 'group'); // Sort by group when filtered
+      } else {
+        newParams.delete('group');
+        newParams.delete('sortBy');
+      }
     }
     newParams.set('page', '1'); // Reset to first page on new filter
     router.push(`/?${newParams.toString()}`);
@@ -166,6 +214,7 @@ export default function Home() {
 
   if (filtersLoading) return <LoadingSpinner />;
   if (filtersError) return <div className="text-center p-8 text-red-500">Error fetching filters: {filtersError}</div>;
+
 
   const handleExamTypeSelect = (type: string) => {
     setSelectedExamType(type);
@@ -180,14 +229,18 @@ export default function Home() {
     if (year !== 'ALL_YEARS') {
       newParams.set('year', year);
     }
+    newParams.set('group', selectedGroup);
     router.push(`/?${newParams.toString()}`);
   };
 
   const handleBackToHome = () => {
     setSelectedExamType('');
     setSelectedYear('');
-    setCurrentView('examTypeSelection');
+    setSelectedInstitution('');
+    setSelectedGroup('Science'); // Reset to default
+    setLocalSearchTerm('');
     router.push('/'); // Clear all URL parameters
+    setCurrentView('examTypeSelection');
   };
 
   return (
@@ -203,7 +256,6 @@ export default function Home() {
             <p className="text-slate-300 text-lg mb-8">
               Access, analyze, and track academic performance across institutions and years
             </p>
-            
           </div>
 
           <div className="max-w-4xl mx-auto bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-700/50 p-8">
@@ -317,41 +369,36 @@ export default function Home() {
       {currentView === 'results' && (
         <div className="container mx-auto px-4 py-8">
           <div className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <button
-              onClick={handleBackToHome}
-              className="px-6 py-3 bg-neutral-100 dark:bg-slate-700 text-neutral-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex items-center gap-2"
+            <Link
+              href="/"
+              className="px-6 py-3 bg-neutral-100 dark:bg-slate-700 text-neutral-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex items-center gap-2 w-full sm:w-auto"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
               Back to Home
-            </button>
+            </Link>
             <div className="flex-grow text-center">
-              <h2 className="text-3xl font-bold relative right-35 text-slate-200">
-                {selectedExamType} Results {selectedYear === 'ALL_YEARS' ? '(All Years)' : `(${selectedYear})`}
-              </h2>
+              <h1 className="text-4xl font-bold text-slate-200">
+                Board Examination Results Portal
+              </h1>
             </div>
           </div>
 
           <div className="mb-8 space-y-4">
             <SearchBar
               onSearch={handleSearch}
-              onInputChange={setLocalSearchTerm} // Pass setLocalSearchTerm to update query state
+              onInputChange={setLocalSearchTerm}
               initialValue={localSearchTerm}
               placeholder="Search by name, roll number, or institution..."
             />
 
             <FilterSection
               options={filterOptions}
-              onFilter={(type, value) => {
-                if (type === 'institution') {
-                  handleInstitutionChange({ target: { value } } as any);
-                }
-              }}
+              onFilter={handleFilterChange}
               selectedFilters={{
-                examType: selectedExamType,
-                year: selectedYear,
                 institution: selectedInstitution,
+                group: selectedGroup,
               }}
             />
 

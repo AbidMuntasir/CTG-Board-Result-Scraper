@@ -18,8 +18,8 @@ URL = 'https://sresult.bise-ctg.gov.bd/rxto2025/individual/'
 MAX_RETRIES = 3 # Number of retries for blank entries or errors
 
 # Define the overall range of roll numbers
-OVERALL_START_ROLL = 100000
-OVERALL_END_ROLL = 133943
+OVERALL_START_ROLL = 500000
+OVERALL_END_ROLL = 535000
 
 # Define batch size for processing
 BATCH_SIZE = 12000 # How many rolls per batch
@@ -80,11 +80,18 @@ else:
 from selenium.common.exceptions import TimeoutException, WebDriverException
 
 try:
+    continuous_failure_count = 0 # Initialize failure counter
+    MAX_CONTINUOUS_FAILURES = 10 # Define the maximum continuous failures allowed
+
     for roll_number in range(current_start_roll, current_end_roll + 1):
         print(f"Processing roll number: {roll_number}")
         # Check if we have exceeded the overall end roll
         if roll_number > OVERALL_END_ROLL:
             print(f"Reached overall end roll {OVERALL_END_ROLL}. Stopping.")
+            break
+        
+        if continuous_failure_count >= MAX_CONTINUOUS_FAILURES:
+            print(f"Stopped scraping after {MAX_CONTINUOUS_FAILURES} continuous failures.")
             break
 
         scraped_successfully = False
@@ -222,8 +229,10 @@ try:
             # Update progress only if successfully scraped and written
             progress['last_scraped_roll'] = roll_number
             save_progress(progress, PROGRESS_FILE_NAME) # Save progress after each successful roll
+            continuous_failure_count = 0 # Reset failure counter on success
         else:
             print(f"Failed to scrape roll number {roll_number} after {MAX_RETRIES} attempts. Skipping.")
+            continuous_failure_count += 1 # Increment failure counter
             # Progress is not updated for this roll, so it will be retried in the next batch if within range.
 
     print(f"Batch completed. Last scraped roll in this batch: {progress['last_scraped_roll']}")

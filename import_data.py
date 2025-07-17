@@ -47,7 +47,7 @@ def parse_subject_data(row_data):
             break
     return json.dumps(subject_marks), total_marks
 
-def process_csv_to_json(csv_file_path, exam_year, exam_type):
+def process_csv_to_json(csv_file_path, exam_year, exam_type, exam_group):
     """
     Reads the CSV, processes each row, and returns a list of dictionaries
     suitable for PostgreSQL insertion.
@@ -83,7 +83,8 @@ def process_csv_to_json(csv_file_path, exam_year, exam_type):
             "registration_id": registration_id,
             "student_type": str(row[8]).strip(),
             "date_of_birth": str(row[11]).strip(),
-            "subject_marks": subject_marks_json
+            "subject_marks": subject_marks_json,
+            "group": exam_group
         })
     return processed_data
 
@@ -92,13 +93,14 @@ if __name__ == "__main__":
     # Set these variables for each import
     EXAM_YEAR = "2025"
     EXAM_TYPE = "SSC"
+    EXAM_GROUP = "Science" # Example: "Science", "Business", "Humanities"
     # ---------------------
 
     csv_path = 'ssc_results.csv'
     conn = None
     cur = None
     try:
-        data_to_import = process_csv_to_json(csv_path, EXAM_YEAR, EXAM_TYPE)
+        data_to_import = process_csv_to_json(csv_path, EXAM_YEAR, EXAM_TYPE, EXAM_GROUP)
         print(f"Processed {len(data_to_import)} records.")
         if data_to_import:
             print("\nSample processed record (first 2):")
@@ -125,11 +127,11 @@ if __name__ == "__main__":
         INSERT INTO students (
             roll_number, student_name, institution_name, gpa, total_marks,
             board, father_name, science_group, mother_name, year, exam_type, session_year,
-            registration_id, student_type, date_of_birth, subject_marks
+            registration_id, student_type, date_of_birth, subject_marks, group_name
         ) VALUES (
             %(roll_number)s, %(student_name)s, %(institution_name)s, %(gpa)s, %(total_marks)s,
             %(board)s, %(father_name)s, %(science_group)s, %(mother_name)s, %(year)s, %(exam_type)s, %(session_year)s,
-            %(registration_id)s, %(student_type)s, %(date_of_birth)s, %(subject_marks)s
+            %(registration_id)s, %(student_type)s, %(date_of_birth)s, %(subject_marks)s, %(group)s
         ) ON CONFLICT (roll_number, exam_type, year) DO NOTHING; -- Prevents duplicate inserts for the same roll_number, exam_type, and year
         """
 

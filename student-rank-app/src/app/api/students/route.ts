@@ -11,8 +11,7 @@ export async function GET(req: NextRequest) {
 
     const searchTerm = searchParams.get('search');
     const institutionFilter = searchParams.get('institution');
-    const yearFilter = searchParams.get('year');
-    const examTypeFilter = searchParams.get('exam_type');
+    const groupFilter = searchParams.get('group');
     const sortBy = searchParams.get('sortBy');
 
     let whereClauses: string[] = [];
@@ -34,15 +33,9 @@ export async function GET(req: NextRequest) {
       paramIndex++;
     }
 
-    if (yearFilter) {
-      whereClauses.push(`year = $${paramIndex}`);
-      queryParams.push(yearFilter);
-      paramIndex++;
-    }
-
-    if (examTypeFilter) {
-      whereClauses.push(`exam_type = $${paramIndex}`);
-      queryParams.push(examTypeFilter);
+    if (groupFilter) {
+      whereClauses.push(`LOWER(group_name) = LOWER($${paramIndex})`);
+      queryParams.push(groupFilter);
       paramIndex++;
     }
 
@@ -54,12 +47,10 @@ export async function GET(req: NextRequest) {
     if (sortBy === 'institution' && institutionFilter) {
       rankPartition = `PARTITION BY institution_name`;
       orderBySql = 'ORDER BY institution_name, total_marks DESC';
+    } else if (sortBy === 'group' && groupFilter) {
+      rankPartition = `PARTITION BY group_name`;
+      orderBySql = 'ORDER BY group_name, total_marks DESC';
     }
-    // Future sorting options can be added here, e.g.:
-    // else if (sortBy === 'year' && yearFilter) {
-    //   rankPartition = `PARTITION BY year`;
-    //   orderBySql = 'ORDER BY year, total_marks DESC';
-    // }
 
     const studentsQuery = `
       WITH ranked_students AS (
@@ -80,7 +71,8 @@ export async function GET(req: NextRequest) {
           student_type,
           date_of_birth,
           subject_marks,
-          DENSE_RANK() OVER (${rankPartition} ORDER BY total_marks DESC) as rank
+          group_name,
+          RANK() OVER (${rankPartition} ORDER BY total_marks DESC) as rank
         FROM students
       )
       SELECT *
@@ -98,7 +90,7 @@ export async function GET(req: NextRequest) {
     const countQuery = `
       SELECT COUNT(*) FROM students ${whereSql};
     `;
-    const countResult = await query(countQuery, queryParams.slice(0, queryParams.length - 2)); // Remove limit/offset params
+    const countResult = await query(countQuery, queryParams.slice(0, queryParams.length - 2));
 
     const totalStudents = parseInt(countResult.rows[0].count);
     const totalPages = Math.ceil(totalStudents / limit);
