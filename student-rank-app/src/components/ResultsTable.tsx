@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Student } from '../types/student';
+import { maskNumber } from '../lib/utils';
 
 interface ResultsTableProps {
   students: Student[];
@@ -37,7 +38,7 @@ export function ResultsTable({ students, onInstitutionClick }: ResultsTableProps
                   {student.student_name}
                 </Link>
               </td>
-              <td className="py-3 px-4 font-mono text-sm">{student.roll_number}</td>
+              <td className="py-3 px-4 font-mono text-sm">{maskNumber(student.roll_number)}</td>
               <td className="py-3 px-4">
                 <button
                   onClick={() => onInstitutionClick(student.institution_name)}

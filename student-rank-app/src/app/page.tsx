@@ -193,10 +193,8 @@ export default function Home() {
       setSelectedInstitution(value);
       if (value) {
         newParams.set('institution', value);
-        newParams.set('sortBy', 'institution');
       } else {
         newParams.delete('institution');
-        newParams.delete('sortBy');
       }
     } else if (type === 'group') {
       setSelectedGroup(value);

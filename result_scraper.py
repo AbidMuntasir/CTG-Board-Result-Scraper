@@ -19,7 +19,7 @@ MAX_RETRIES = 3 # Number of retries for blank entries or errors
 
 # Define the overall range of roll numbers
 OVERALL_START_ROLL = 500000
-OVERALL_END_ROLL = 535000
+OVERALL_END_ROLL = 5400000
 
 # Define batch size for processing
 BATCH_SIZE = 12000 # How many rolls per batch

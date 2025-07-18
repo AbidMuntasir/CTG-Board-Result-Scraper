@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LoadingSpinner from '../../../components/LoadingSpinner';
+import { maskNumber } from '../../../lib/utils';
 
 interface SubjectMark {
   name: string;
@@ -75,21 +76,21 @@ export default function StudentDetailPage() {
     <div className="min-h-screen bg-gradient-to-b from-white to-neutral-50 dark:from-gray-900 dark:to-gray-800 py-8">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-colors mb-8"
+          <button
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-colors mb-8 px-3 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Back to All Students
-          </Link>
+          </button>
 
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden mb-8">
             <div className="p-6 sm:p-8 border-b border-neutral-200 dark:border-gray-700">
               <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">{student.student_name}</h1>
               <p className="mt-2 text-neutral-500 dark:text-neutral-400">
-                Student ID: {student.roll_number}
+                Student ID: {maskNumber(student.roll_number)}
               </p>
             </div>
 
@@ -156,7 +157,7 @@ export default function StudentDetailPage() {
                   <div className="mt-2 space-y-2">
                     <p className="flex justify-between">
                       <span className="text-neutral-600 dark:text-neutral-300">Registration ID</span>
-                      <span className="font-semibold text-neutral-900 dark:text-white">{student.registration_id}</span>
+                      <span className="font-semibold text-neutral-900 dark:text-white">{maskNumber(student.registration_id)}</span>
                     </p>
                     <p className="flex justify-between">
                       <span className="text-neutral-600 dark:text-neutral-300">Student Type</span>
