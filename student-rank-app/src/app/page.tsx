@@ -83,7 +83,7 @@ export default function Home() {
   const institutionFilter = searchParams.get('institution') || '';
   const yearFilter = searchParams.get('year') || '';
   const examTypeFilter = searchParams.get('exam_type') || '';
-  const groupFilter = searchParams.get('group') || 'Science'; // Default to Science if not in URL
+  const groupFilter = searchParams.get('group') || '';
   const sortBy = searchParams.get('sortBy') || '';
   // Sync local search term with URL search term when URL changes
   useEffect(() => {
@@ -181,10 +181,8 @@ export default function Home() {
     const newParams = new URLSearchParams(searchParams.toString());
     newParams.delete('sortBy');
     newParams.delete('institution'); // Also clear institution filter when clearing sort
-    newParams.delete('group'); // Clear group filter when clearing sort
     router.push(`/?${newParams.toString()}`);
     setSelectedInstitution(''); // Clear selected institution state
-    setSelectedGroup('Science'); // Reset to default Science group
   };
 
   const handleFilterChange = (type: string, value: string) => {
@@ -246,7 +244,7 @@ export default function Home() {
       {currentView === 'examTypeSelection' && (
         <div className="container mx-auto px-4 py-12">
           <div className="text-center max-w-4xl mx-auto mb-12">
-            <h1 className="text-4xl font-bold mb-4 text-white">
+            <h1 className="text-4xl font-bold mb-4 text-slate-200">
               <span className="bg-clip-text  bg-gradient-to-r from-primary-300 via-primary-400 to-primary-300">
                 Board Examination Results Portal
               </span>
@@ -380,6 +378,11 @@ export default function Home() {
               <h1 className="text-4xl font-bold text-slate-200 results-title">
                 Board Examination Results Portal
               </h1>
+              {selectedGroup && (
+                <p className="text-xl text-slate-400 mt-2">
+                  Showing results for <span className="font-bold text-primary-400">{selectedGroup}</span> Group
+                </p>
+              )}
             </div>
           </div>
 
@@ -400,7 +403,7 @@ export default function Home() {
               }}
             />
 
-            {sortBy && (
+            {sortBy === 'institution' && (
               <div className="flex justify-end">
                 <button
                   onClick={clearSort}

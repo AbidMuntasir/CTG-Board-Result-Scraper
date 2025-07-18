@@ -93,7 +93,7 @@ if __name__ == "__main__":
     # Set these variables for each import
     EXAM_YEAR = "2025"
     EXAM_TYPE = "SSC"
-    EXAM_GROUP = "Science" # Example: "Science", "Business", "Humanities"
+    EXAM_GROUP = "Business" # Example: "Science", "Business", "Humanities"
     # ---------------------
 
     csv_path = 'ssc_results.csv'

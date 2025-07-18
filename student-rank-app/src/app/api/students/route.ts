@@ -44,12 +44,12 @@ export async function GET(req: NextRequest) {
     let rankPartition = '';
     let orderBySql = 'ORDER BY total_marks DESC';
 
-    if (sortBy === 'institution' && institutionFilter) {
-      rankPartition = `PARTITION BY institution_name`;
-      orderBySql = 'ORDER BY institution_name, total_marks DESC';
-    } else if (sortBy === 'group' && groupFilter) {
+    if (groupFilter) {
       rankPartition = `PARTITION BY group_name`;
       orderBySql = 'ORDER BY group_name, total_marks DESC';
+    } else if (sortBy === 'institution' && institutionFilter) {
+      rankPartition = `PARTITION BY institution_name`;
+      orderBySql = 'ORDER BY institution_name, total_marks DESC';
     }
 
     const studentsQuery = `
