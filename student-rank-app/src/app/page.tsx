@@ -367,15 +367,15 @@ export default function Home() {
       {currentView === 'results' && (
         <div className="container mx-auto px-4 py-8">
           <div className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <Link
-              href="/"
+            <button
+              onClick={() => router.back()}
               className="px-6 py-3 bg-neutral-100 dark:bg-slate-700 text-neutral-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex items-center gap-2 w-full sm:w-auto"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              Back to Home
-            </Link>
+              Back
+            </button>
             <div className="flex-grow text-center">
               <h1 className="text-4xl font-bold text-slate-200">
                 Board Examination Results Portal
