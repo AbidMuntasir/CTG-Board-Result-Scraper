@@ -10,7 +10,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage <= 1}
-        className="px-4 py-2 rounded-md bg-white border border-neutral-300 text-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+        className="px-3 sm:px-4 py-2   rounded-md bg-slate-700 border border-slate-600 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
       >
         Previous
       </button>
@@ -34,10 +34,10 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
             <button
               key={pageNum}
               onClick={() => onPageChange(pageNum)}
-              className={`w-10 h-10 flex items-center justify-center rounded-md transition-colors ${
+              className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-md transition-colors ${
                 isCurrentPage
                   ? 'bg-primary-600 text-white'
-                  : 'bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50'
+                  : 'bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700'
               }`}
             >
               {pageNum}
@@ -49,7 +49,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages}
-        className="px-4 py-2 rounded-md bg-white border border-neutral-300 text-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+        className=" px-3 sm:px-4 py-2 rounded-md bg-slate-700 border border-slate-600 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
       >
         Next
       </button>

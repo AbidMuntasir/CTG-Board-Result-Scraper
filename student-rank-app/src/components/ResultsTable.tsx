@@ -9,7 +9,7 @@ interface ResultsTableProps {
 
 export function ResultsTable({ students, onInstitutionClick }: ResultsTableProps) {
   return (
-    <div className="overflow-x-auto bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg border border-slate-700">
+    <div className="overflow-x-auto bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg border border-slate-700 results-table">
       <table className="min-w-full border-collapse">
         <thead>
           <tr className="border-b border-slate-700">

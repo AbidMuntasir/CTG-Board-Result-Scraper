@@ -369,15 +369,15 @@ export default function Home() {
           <div className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <button
               onClick={() => router.back()}
-              className="px-6 py-3 bg-neutral-100 dark:bg-slate-700 text-neutral-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex items-center gap-2 w-full sm:w-auto"
+              className="back-button px-4 py-2 bg-neutral-100 dark:bg-slate-700 text-neutral-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors hidden items-center gap-2 md:flex sm:w-auto"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
               Back
             </button>
             <div className="flex-grow text-center">
-              <h1 className="text-4xl font-bold text-slate-200">
+              <h1 className="text-4xl font-bold text-slate-200 results-title">
                 Board Examination Results Portal
               </h1>
             </div>
@@ -388,7 +388,7 @@ export default function Home() {
               onSearch={handleSearch}
               onInputChange={setLocalSearchTerm}
               initialValue={localSearchTerm}
-              placeholder="Search by name, roll number, or institution..."
+              placeholder="Search by Roll, Name, Institution"
             />
 
             <FilterSection
@@ -412,18 +412,37 @@ export default function Home() {
             )}
           </div>
 
+          <div className="mb-8">
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={handlePageChange}
+            />
+          </div>
+
           <ResultsTable
             students={students}
             onInstitutionClick={handleInstitutionClick}
           />
-
-          <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
-            onPageChange={handlePageChange}
-          />
+          <div className="flex justify-center items-center mt-6 gap-2">
+            <button
+              onClick={() => handlePageChange(1)}
+              disabled={pagination.page <= 1}
+              className="px-3 sm:px-4 py-2 rounded-md bg-slate-700 border border-slate-600 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+            >
+              First Page
+            </button>
+            <button
+              onClick={() => handlePageChange(pagination.totalPages)}
+              disabled={pagination.page >= pagination.totalPages}
+              className="px-3 sm:px-4 py-2 rounded-md bg-slate-700 border border-slate-600 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+            >
+              Last Page
+            </button>
+          </div>
         </div>
       )}
     </div>
   );
 }
+
