@@ -22,7 +22,7 @@ OVERALL_START_ROLL = 300000
 OVERALL_END_ROLL = 340000
 
 # Define batch size for processing
-BATCH_SIZE = 20000 # How many rolls per batch
+BATCH_SIZE = 17000 # How many rolls per batch
 
 # Define progress file path
 PROGRESS_FILE_NAME = 'progress.json'
